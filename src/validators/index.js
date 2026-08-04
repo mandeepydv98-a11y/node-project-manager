@@ -48,6 +48,14 @@ const userForgotPasswordValidator = () => {
 const userResetForgotPasswordValidator = () => {
   return [body("newPassword").notEmpty().withMessage("Password is required")];
 };
+
+const createProjectValidator = () => {
+  return [
+    body("name").notEmpty().withMessage("Name is required"),
+    body("description").optional(),
+  ];
+};
+
 export {
   userRegisterValidator,
   userLoginValidator,
