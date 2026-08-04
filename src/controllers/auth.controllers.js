@@ -9,7 +9,6 @@ import {
 } from "../utils/mail.js";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
-import { error } from "console";
 
 const generateAccessAndRefreshToken = async (userId) => {
   try {
