@@ -7,12 +7,19 @@ const taskSchema = new Schema(
       type: String,
       required: true,
       trim: true,
+      minlength: 1,
+      maxlength: 200,
     },
-    description: String,
+    description: {
+      type: String,
+      trim: true,
+      maxlength: 5000,
+    },
     project: {
       type: Schema.Types.ObjectId,
       ref: "Project",
       required: true,
+      index: true,
     },
     assignedTo: {
       type: Schema.Types.ObjectId,
@@ -21,6 +28,7 @@ const taskSchema = new Schema(
     assignedBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
+      required: true,
     },
     status: {
       type: String,
@@ -31,6 +39,8 @@ const taskSchema = new Schema(
       type: [
         {
           url: String,
+          localPath: String,
+          originalName: String,
           mimetype: String,
           size: Number,
         },

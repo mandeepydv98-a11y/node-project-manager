@@ -13,3 +13,9 @@ export const TaskStatusEnum = {
 };
 
 export const AvailableTaskStatus = Object.values(TaskStatusEnum);
+
+export const ProjectManagerRoles = [
+  UserRolesEnum.ADMIN,
+  UserRolesEnum.PROJECT_ADMIN,
+  UserRolesEnum.MEMBER,
+];

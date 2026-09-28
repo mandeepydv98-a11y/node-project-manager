@@ -2,6 +2,7 @@ import mongoose, { Schema } from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+
 const userSchema = new Schema(
   {
     avatar: {
@@ -10,7 +11,7 @@ const userSchema = new Schema(
         localPath: String,
       },
       default: {
-        url: `https://placehold.co/200x200`,
+        url: "https://placehold.co/200x200",
         localPath: "",
       },
     },
@@ -28,14 +29,17 @@ const userSchema = new Schema(
       unique: true,
       lowercase: true,
       trim: true,
+      index: true,
     },
     fullname: {
       type: String,
       trim: true,
+      maxlength: 100,
     },
     password: {
       type: String,
       required: [true, "Password is required"],
+      minlength: 6,
     },
     isEmailVerified: {
       type: Boolean,
@@ -44,10 +48,10 @@ const userSchema = new Schema(
     refreshToken: {
       type: String,
     },
-    forgetPasswordToken: {
+    forgotPasswordToken: {
       type: String,
     },
-    forgetPasswordExpiry: {
+    forgotPasswordExpiry: {
       type: Date,
     },
     emailVerificationToken: {
@@ -64,12 +68,11 @@ const userSchema = new Schema(
 
 userSchema.pre("save", async function () {
   if (!this.isModified("password")) return;
-
   this.password = await bcrypt.hash(this.password, 10);
 });
 
-userSchema.methods.isPasswordCorrect = async function (password) {
-  return await bcrypt.compare(password, this.password);
+userSchema.methods.isPasswordCorrect = function (password) {
+  return bcrypt.compare(password, this.password);
 };
 
 userSchema.methods.generateAccessToken = function () {
@@ -80,7 +83,7 @@ userSchema.methods.generateAccessToken = function () {
       username: this.username,
     },
     process.env.ACCESS_TOKEN_SECRET,
-    { expiresIn: process.env.ACCESS_TOKEN_EXPIRY },
+    { expiresIn: process.env.ACCESS_TOKEN_EXPIRY || "15m" },
   );
 };
 
@@ -90,19 +93,17 @@ userSchema.methods.generateRefreshToken = function () {
       _id: this._id,
     },
     process.env.REFRESH_TOKEN_SECRET,
-    { expiresIn: process.env.REFRESH_TOKEN_EXPIRY },
+    { expiresIn: process.env.REFRESH_TOKEN_EXPIRY || "7d" },
   );
 };
 
 userSchema.methods.generateTemporaryToken = function () {
-  const unHashedToken = crypto.randomBytes(20).toString("hex");
-
+  const unHashedToken = crypto.randomBytes(32).toString("hex");
   const hashedToken = crypto
     .createHash("sha256")
     .update(unHashedToken)
     .digest("hex");
-
-  const tokenExpiry = Date.now() + 20 * 60 * 1000; //20mins
+  const tokenExpiry = Date.now() + 20 * 60 * 1000;
 
   return { unHashedToken, hashedToken, tokenExpiry };
 };

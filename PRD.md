@@ -1,180 +1,138 @@
-# Product Requirements Document (PRD)
+# Project Camp Backend — Product Requirements
 
-## Project Camp Backend
+## Overview
 
-### 1. Product Overview
+Project Camp is a RESTful backend for collaborative project management. Authenticated users can create projects, manage project members and roles, organize tasks and subtasks, maintain project notes, and use email-based account recovery and verification.
 
-**Product Name:** Project Camp Backend  
-**Version:** 1.0.0  
-**Product Type:** Backend API for Project Management System
+## Roles
 
-Project Camp Backend is a RESTful API service designed to support collaborative project management. The system enables teams to organize projects, manage tasks with subtasks, maintain project notes, and handle user authentication with role-based access control.
+- `admin`: full project administration, including project/member management and task/subtask/note administration
+- `project_admin`: manages tasks and subtasks
+- `member`: views project content and can update subtask completion status
 
-### 2. Target Users
+Roles are scoped per project through the `ProjectMember` model.
 
-- **Project Administrators:** Create and manage projects, assign roles, oversee all project activities
-- **Project Admins:** Manage tasks and project content within assigned projects
-- **Team Members:** View projects, update task completion status, access project information
+## Authentication
 
-### 3. Core Features
+- Registration with email verification
+- Login/logout with JWT access and refresh tokens
+- HTTP-only cookies
+- Bearer-token support for API clients
+- Current-user endpoint
+- Password change
+- Forgot/reset password
+- Temporary token hashing and expiry
+- Verification-email resend
+- Refresh-token rotation
+- Refresh-token revocation on logout/password change/reset
 
-#### 3.1 User Authentication & Authorization
+## Project Management
 
-- **User Registration:** Account creation with email verification
-- **User Login:** Secure authentication with JWT tokens
-- **Password Management:** Change password, forgot/reset password functionality
-- **Email Verification:** Account verification via email tokens
-- **Token Management:** Access token refresh mechanism
-- **Role-Based Access Control:** Three-tier permission system (Admin, Project Admin, Member)
+- Create, list, view, update, and delete projects
+- Automatic creator membership as project `admin`
+- Project member listing
+- Add existing users to projects
+- Update project member roles
+- Remove members
+- Prevent removal/demotion of the final project administrator
+- Unassign a removed member from their tasks
+- Cascade cleanup when a project is deleted, including subtasks, notes, members, and task attachment files
 
-#### 3.2 Project Management
+## Task Management
 
-- **Project Creation:** Create new projects with name and description
-- **Project Listing:** View all projects user has access to with member count
-- **Project Details:** Access individual project information
-- **Project Updates:** Modify project information (Admin only)
-- **Project Deletion:** Remove projects (Admin only)
+- Create, list, view, update, and delete tasks
+- Assign tasks only to project members
+- Task statuses: `todo`, `in_progress`, `done`
+- Multiple task attachments
+- Maximum 5 attachments per request
+- Maximum 5 MB per attachment
+- Allowed attachment types: JPEG, PNG, WebP, PDF, and plain text
+- Attachment cleanup when tasks/projects are deleted
 
-#### 3.3 Team Member Management
+## Subtasks
 
-- **Member Addition:** Invite users to projects via email
-- **Member Listing:** View all project team members
-- **Role Management:** Update member roles within projects (Admin only)
-- **Member Removal:** Remove team members from projects (Admin only)
+- Create subtasks
+- Update subtasks
+- Delete subtasks
+- Admin/project-admin management
+- Members can update only completion status
 
-#### 3.4 Task Management
+## Notes
 
-- **Task Creation:** Create tasks with title, description, and assignee
-- **Task Listing:** View all tasks within a project
-- **Task Details:** Access individual task information
-- **Task Updates:** Modify task information and status
-- **Task Deletion:** Remove tasks from projects
-- **File Attachments:** Support for multiple file attachments on tasks
-- **Task Assignment:** Assign tasks to specific team members
-- **Status Tracking:** Three-state status system (Todo, In Progress, Done)
+- Create/list/view/update/delete project notes
+- Note creation/update/delete restricted to project `admin`
+- All project members can view notes
 
-#### 3.5 Subtask Management
+## API Endpoints
 
-- **Subtask Creation:** Add subtasks to existing tasks
-- **Subtask Updates:** Modify subtask details and completion status
-- **Subtask Deletion:** Remove subtasks (Admin/Project Admin only)
-- **Member Completion:** Allow members to mark subtasks as complete
+### Auth — `/api/v1/auth`
 
-#### 3.6 Project Notes
+- `POST /register`
+- `POST /login`
+- `POST /logout`
+- `GET /current-user`
+- `POST /change-password`
+- `POST /refresh-token`
+- `GET /verify-email/:verificationToken`
+- `POST /forgot-password`
+- `POST /reset-password/:resetToken`
+- `POST /resend-email-verification`
 
-- **Note Creation:** Add notes to projects (Admin only)
-- **Note Listing:** View all project notes
-- **Note Details:** Access individual note content
-- **Note Updates:** Modify existing notes (Admin only)
-- **Note Deletion:** Remove notes (Admin only)
+### Projects — `/api/v1/projects`
 
-#### 3.7 System Health
+- `GET /`
+- `POST /`
+- `GET /:projectId`
+- `PUT /:projectId`
+- `DELETE /:projectId`
+- `GET /:projectId/members`
+- `POST /:projectId/members`
+- `PUT /:projectId/members/:userId`
+- `DELETE /:projectId/members/:userId`
 
-- **Health Check:** API endpoint for system status monitoring
+### Tasks — `/api/v1/tasks`
 
-### 4. Technical Specifications
+- `GET /:projectId`
+- `POST /:projectId`
+- `GET /:projectId/t/:taskId`
+- `PUT /:projectId/t/:taskId`
+- `DELETE /:projectId/t/:taskId`
+- `POST /:projectId/t/:taskId/subtasks`
+- `PUT /:projectId/st/:subTaskId`
+- `DELETE /:projectId/st/:subTaskId`
 
-#### 4.1 API Endpoints Structure
+### Notes — `/api/v1/notes`
 
-**Authentication Routes** (`/api/v1/auth/`)
+- `GET /:projectId`
+- `POST /:projectId`
+- `GET /:projectId/n/:noteId`
+- `PUT /:projectId/n/:noteId`
+- `DELETE /:projectId/n/:noteId`
 
-- `POST /register` - User registration
-- `POST /login` - User authentication
-- `POST /logout` - User logout (secured)
-- `GET /current-user` - Get current user info (secured)
-- `POST /change-password` - Change user password (secured)
-- `POST /refresh-token` - Refresh access token
-- `GET /verify-email/:verificationToken` - Email verification
-- `POST /forgot-password` - Request password reset
-- `POST /reset-password/:resetToken` - Reset forgotten password
-- `POST /resend-email-verification` - Resend verification email (secured)
+### Health — `/api/v1/healthcheck`
 
-**Project Routes** (`/api/v1/projects/`)
+- `GET /`
 
-- `GET /` - List user projects (secured)
-- `POST /` - Create project (secured)
-- `GET /:projectId` - Get project details (secured, role-based)
-- `PUT /:projectId` - Update project (secured, Admin only)
-- `DELETE /:projectId` - Delete project (secured, Admin only)
-- `GET /:projectId/members` - List project members (secured)
-- `POST /:projectId/members` - Add project member (secured, Admin only)
-- `PUT /:projectId/members/:userId` - Update member role (secured, Admin only)
-- `DELETE /:projectId/members/:userId` - Remove member (secured, Admin only)
+### Root
 
-**Task Routes** (`/api/v1/tasks/`)
+- `GET /`
 
-- `GET /:projectId` - List project tasks (secured, role-based)
-- `POST /:projectId` - Create task (secured, Admin/Project Admin)
-- `GET /:projectId/t/:taskId` - Get task details (secured, role-based)
-- `PUT /:projectId/t/:taskId` - Update task (secured, Admin/Project Admin)
-- `DELETE /:projectId/t/:taskId` - Delete task (secured, Admin/Project Admin)
-- `POST /:projectId/t/:taskId/subtasks` - Create subtask (secured, Admin/Project Admin)
-- `PUT /:projectId/st/:subTaskId` - Update subtask (secured, role-based)
-- `DELETE /:projectId/st/:subTaskId` - Delete subtask (secured, Admin/Project Admin)
+## Security Requirements
 
-**Note Routes** (`/api/v1/notes/`)
+- Password hashing with bcrypt
+- JWT access/refresh token verification
+- HTTP-only authentication cookies
+- Optional Bearer access-token authentication
+- Project-level authorization middleware
+- Input validation with `express-validator`
+- Temporary-token hashing and expiry
+- File type and size validation
+- CORS configuration with credentials support
+- Centralized error handling
+- Generic forgot-password response to reduce account enumeration
+- Sensitive user/token fields excluded from authenticated user responses
+- Refresh-token revocation when the password changes or is reset
 
-- `GET /:projectId` - List project notes (secured, role-based)
-- `POST /:projectId` - Create note (secured, Admin only)
-- `GET /:projectId/n/:noteId` - Get note details (secured, role-based)
-- `PUT /:projectId/n/:noteId` - Update note (secured, Admin only)
-- `DELETE /:projectId/n/:noteId` - Delete note (secured, Admin only)
+## Completion Status
 
-**Health Check** (`/api/v1/healthcheck/`)
-
-- `GET /` - System health status
-
-#### 4.2 Permission Matrix
-
-| Feature                    | Admin | Project Admin | Member |
-| -------------------------- | ----- | ------------- | ------ |
-| Create Project             | ✓     | ✗             | ✗      |
-| Update/Delete Project      | ✓     | ✗             | ✗      |
-| Manage Project Members     | ✓     | ✗             | ✗      |
-| Create/Update/Delete Tasks | ✓     | ✓             | ✗      |
-| View Tasks                 | ✓     | ✓             | ✓      |
-| Update Subtask Status      | ✓     | ✓             | ✓      |
-| Create/Delete Subtasks     | ✓     | ✓             | ✗      |
-| Create/Update/Delete Notes | ✓     | ✗             | ✗      |
-| View Notes                 | ✓     | ✓             | ✓      |
-
-#### 4.3 Data Models
-
-**User Roles:**
-
-- `admin` - Full system access
-- `project_admin` - Project-level administrative access
-- `member` - Basic project member access
-
-**Task Status:**
-
-- `todo` - Task not started
-- `in_progress` - Task currently being worked on
-- `done` - Task completed
-
-### 5. Security Features
-
-- JWT-based authentication with refresh tokens
-- Role-based authorization middleware
-- Input validation on all endpoints
-- Email verification for account security
-- Secure password reset functionality
-- File upload security with Multer middleware
-- CORS configuration for cross-origin requests
-
-### 6. File Management
-
-- Support for multiple file attachments on tasks
-- Files stored in public/images directory
-- File metadata tracking (URL, MIME type, size)
-- Secure file upload handling
-
-### 7. Success Criteria
-
-- Secure user authentication and authorization system
-- Complete project lifecycle management
-- Hierarchical task and subtask organization
-- Role-based access control implementation
-- File attachment capability for enhanced collaboration
-- Email notification system for user verification and password reset
-- Comprehensive API documentation through endpoint structure
+The API described above is implemented in the current source tree. JavaScript source syntax has been checked successfully. Full database-backed authentication, email delivery, and end-to-end API testing require valid MongoDB and SMTP credentials.

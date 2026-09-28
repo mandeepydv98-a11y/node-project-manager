@@ -2,83 +2,69 @@ import Mailgen from "mailgen";
 import nodemailer from "nodemailer";
 
 const sendEmail = async (options) => {
-  const mailGenertor = new Mailgen({
+  const mailGenerator = new Mailgen({
     theme: "default",
     product: {
-      name: "Task Manager",
-      link: "https://taskmanagerlink.com",
+      name: process.env.MAIL_PRODUCT_NAME || "Project Camp",
+      link: process.env.MAIL_PRODUCT_URL || "http://localhost:3000",
     },
   });
 
-  const emailTextual = mailGenertor.generatePlaintext(options.mailgenContent);
-  const emailHtml = mailGenertor.generate(options.mailgenContent);
+  const emailTextual = mailGenerator.generatePlaintext(options.mailgenContent);
+  const emailHtml = mailGenerator.generate(options.mailgenContent);
 
   const transporter = nodemailer.createTransport({
     host: process.env.MAILTRAP_SMTP_HOST,
-    port: process.env.MAILTRAP_SMTP_PORT,
+    port: Number(process.env.MAILTRAP_SMTP_PORT || 2525),
+    secure: process.env.MAILTRAP_SMTP_SECURE === "true",
     auth: {
       user: process.env.MAILTRAP_SMTP_USER,
       pass: process.env.MAILTRAP_SMTP_PASS,
     },
   });
 
-  const mail = {
-    from: "mail.taskmanager@example.com",
+  await transporter.sendMail({
+    from: process.env.MAIL_FROM || "no-reply@projectcamp.local",
     to: options.email,
     subject: options.subject,
     text: emailTextual,
     html: emailHtml,
-  };
-
-  try {
-    await transporter.sendMail(mail);
-  } catch (error) {
-    console.error(
-      "Email service failed silently. Make sure that you have provided your MAILTRAP credentials in the .env file",
-    );
-    console.error("Error:", error);
-  }
+  });
 };
 
-const emailVerificationMailgenContent = (username, verificationUrl) => {
-  return {
-    body: {
-      name: username,
-      intro: "Welcome to our App!. We are excited to have you onboard",
-      action: {
-        instructions:
-          "To verify your email please click on the following button",
-        button: {
-          color: "#22BC66",
-          text: "Verify your email",
-          link: verificationUrl,
-        },
+const emailVerificationMailgenContent = (username, verificationUrl) => ({
+  body: {
+    name: username,
+    intro: "Welcome to Project Camp. We are excited to have you onboard.",
+    action: {
+      instructions: "To verify your email, click the button below.",
+      button: {
+        color: "#22BC66",
+        text: "Verify your email",
+        link: verificationUrl,
       },
-      outro:
-        "Need help , or have quetions? just reply to this email, we'd love to help.",
     },
-  };
-};
+    outro:
+      "If you did not create this account, you can safely ignore this email.",
+  },
+});
 
-const forgotPasswordMailgenContent = (username, passwordResetUrl) => {
-  return {
-    body: {
-      name: username,
-      intro: "We got a request to reset the password of your account",
-      action: {
-        instructions:
-          "To reset your password click on the following button or link",
-        button: {
-          color: "#22BC66",
-          text: "Reset Password",
-          link: passwordResetUrl,
-        },
+const forgotPasswordMailgenContent = (username, passwordResetUrl) => ({
+  body: {
+    name: username,
+    intro: "We received a request to reset the password of your account.",
+    action: {
+      instructions: "To reset your password, click the button below.",
+      button: {
+        color: "#22BC66",
+        text: "Reset Password",
+        link: passwordResetUrl,
       },
-      outro:
-        "Need help , or have quetions? just reply to this email, we'd love to help.",
     },
-  };
-};
+    outro:
+      "If you did not request a password reset, you can safely ignore this email.",
+  },
+});
 
 export {
   emailVerificationMailgenContent,

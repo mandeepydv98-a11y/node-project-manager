@@ -6,11 +6,14 @@ const subTaskSchema = new Schema(
       type: String,
       required: true,
       trim: true,
+      minlength: 1,
+      maxlength: 200,
     },
     task: {
       type: Schema.Types.ObjectId,
       ref: "Task",
       required: true,
+      index: true,
     },
     isCompleted: {
       type: Boolean,

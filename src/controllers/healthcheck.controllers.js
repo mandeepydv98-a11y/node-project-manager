@@ -1,21 +1,22 @@
+import mongoose from "mongoose";
 import { ApiResponse } from "../utils/api-response.js";
 import { asyncHandler } from "../utils/async-handler.js";
-/** 
 
-const healthCheck = (req, res , next) => {
-  try {
-    res
-      .status(200)
-      .json(new ApiResponse(200, { message: "server is running" }));
-  } catch (error) {
-    next(err)
-  }
-};
+const healthCheck = asyncHandler(async (_req, res) => {
+  const isDatabaseConnected = mongoose.connection.readyState === 1;
+  const statusCode = isDatabaseConnected ? 200 : 503;
 
-*/
-
-const healthCheck = asyncHandler(async (req, res) => {
-  res.status(200).json(new ApiResponse(200, { message: "server is running" }));
+  return res.status(statusCode).json(
+    new ApiResponse(
+      statusCode,
+      {
+        status: isDatabaseConnected ? "ok" : "degraded",
+        database: isDatabaseConnected ? "connected" : "disconnected",
+        uptime: process.uptime(),
+      },
+      isDatabaseConnected ? "Health check passed" : "Database unavailable",
+    ),
+  );
 });
 
 export { healthCheck };

@@ -1,22 +1,19 @@
-import dotenv from "dotenv";
-import app from "./app.js";
+import "dotenv/config";
 import dns from "node:dns";
-dns.setServers(["1.1.1.1", "8.8.8.8"]);
+import app from "./app.js";
 import connectDB from "./db/index.js";
 
-dotenv.config({
-  path: "./.env",
-});
+dns.setServers(["1.1.1.1", "8.8.8.8"]);
 
-const port = process.env.PORT || 3000;
+const port = Number(process.env.PORT || 3000);
 
 connectDB()
   .then(() => {
-    app.listen(port, () => {
-      console.log(`Example app listening on port http://localhost:${port}`);
+    app.listen(port, "0.0.0.0", () => {
+      console.log(`Project Camp API listening on port ${port}`);
     });
   })
-  .catch((err) => {
-    console.error("MongoDB connection error", err);
+  .catch((error) => {
+    console.error("MongoDB connection error", error);
     process.exit(1);
   });
